@@ -81,6 +81,15 @@
           var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
           var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
           //var isIHUB        = hasOne(dscan, "Infrastructure Hub");
+          var hasLab        = findBy(dscan, function(v) {
+            return v.match(/ Laboratory$|^Drug Lab$/);
+          });
+          var hasRefiner    = findBy(dscan, function(v) {
+            return v.match(/ Refining Array$/);
+          });
+          var hasReactor    = findBy(dscan, function(v) {
+            return v.match(/ Reactor Array$/);
+          });
           var numTurrets = countBy(dscan, function(line) {
             return line.match(/ (Laser|Blaster|Railgun|Artillery|AutoCannon|Torpedo|Missile) Battery$/);
           });
@@ -94,6 +103,9 @@
           if (hasCyno)          notes.push("Cynogen");
           if (hasHarvester)     notes.push("Miner");
           if (hasTCU)           notes.push("TCU");
+          if (hasLab)           notes.push("Lab");
+          if (hasRefiner)       notes.push("Refining");
+          if (hasReactor)       notes.push("Reactor");
           if (numTurrets == 0 && numHardeners == 0) {
             notes.push("no guns/hardeners");
           } else {
@@ -130,6 +142,9 @@
                   hasJumpBridge ? 'Jump Bridge' :
                   hasCyno ? 'Cynogen' :
                   hasHarvester ? 'Mining' :
+                  hasLab ? 'Labs' :
+                  hasRefiner ? 'Refining' :
+                  hasReactor ? 'Reaction' :
                   'Staging',
                 notes.join(", ") + " - http://raynor.cl/s/" + token,
                 towerType];
