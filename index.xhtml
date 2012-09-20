@@ -129,11 +129,9 @@
           return v.indexOf("Control Tower") >= 0;
         });
         if (towerType) {
-          var words = towerType.split(' ');
-          if (words.length < 4) // "Amarr Control Tower"
-            towerType = words[0] + ' Large';
-          else                  // "Amarr Control Tower Small"
-            towerType = words[0] + ' ' + words[3];
+          towerType = towerType.replace(" Control Tower", "");
+          if (!towerType.match(/ (Small|Medium)$/))
+            towerType += " Large";
         } else {
           towerType = '';
         }
