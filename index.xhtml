@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>Moon Tool</title>
+    <script type="text/javascript"><![CDATA[
+      var moon_form, moon_planet, moon_moon, moon_corp, moon_alliance,
+        moon_scoutname, moon_input, moon_output, moon_current;
+
+      function removeChildren(r) {
+        var child;
+        while ((child = r.firstChild))
+          r.removeChild(child);
+      }
+
+      function moonSetOutput(obj) {
+        moon_output.parentNode.replaceChild(obj, moon_output);
+        moon_output = obj;
+        obj.setAttribute("id", "moon-output");
+      }
+
+      function moonSetOutputText(str) {
+        var p = document.createElement("p");
+        p.appendChild(document.createTextNode(str));
+        moonSetOutput(p);
+      }
+
+      function formatDate(time) {
+        return (time.getMonth()+1) +
+               '/' + time.getDate() +
+               '/' + time.getFullYear();
+      }
+
+      function dscanHasOne(lines, name) {
+        return lines.some(function(cells) {
+          return cells[0] == name;
+        });
+      }
+
+      function hasOne(ary, value) {
+        return ary.some(function(elem) {
+          return elem == value;
+        });
+      }
+
+      function countBy(ary, cond) {
+        var counter = 0;
+        for (var i = 0; i < ary.length; ++i)
+          if (cond(ary[i]))
+            ++counter;
+        return counter;
+      }
+
+      function findBy(ary, cond) {
+        for (var i = 0; i < ary.length; ++i) {
+          var item = ary[i];
+          if (cond(item))
+            return item;
+        }
+        return null;
+      }
+
+      function moonFormatOutput(input, headers) {
+        if (false) { //if (!headers.solarsystemname) {
+          moonSetOutputText(
+            "Please use the EVE ingame browser and trust this site");
+        } else {
+          var div = document.createElement("div");
+          var btn = document.createElement("button");
+          btn.appendChild(document.createTextNode("Clear results"));
+          btn.addEventListener("click", function(e) {
+            moonSetOutput(document.createElement("p"));
+          });
+          div.appendChild(btn);
+          var row = document.createElement("textarea");
+          row.setAttribute("readonly", "readonly");
+          var localDscan = input.split("\n").filter(function(line) {
+            return line.match(/\t\d{1,3} km$/) ||
+                   line.match(/ m$/); ; // only stuff on grid
+          });
+          var dscan = localDscan.map(function(line) {
+            return line.split("\t")[1];
+          });
+          var hasCSAA       = hasOne(dscan, "Capital Ship Assembly Array");
+          var hasJammer     = hasOne(dscan, "Cynosural System Jammer");
+          var hasJumpBridge = hasOne(dscan, "Jump Bridge");
+          var hasCyno       = hasOne(dscan, "Cynosural Generator Array");
+          var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
+          var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
+          //var isIHUB        = hasOne(dscan, "Infrastructure Hub");
+          var numTurrets = countBy(dscan, function(line) {
+            return line.match(/ (Laser|Blaster|Railgun|Artillery|AutoCannon|Torpedo|Missile) Battery$/);
+          });
+          var numHardeners = countBy(dscan, function(line) {
+            return line.match(/^(Ballistic Deflection|Explosion Dampening|Heat Dissipation|Photon Scattering) Array$/);
+          });
+          var notes = []
+          if (hasCSAA)          notes.push("CSAA");
+          if (hasJammer)        notes.push("Jammer");
+          if (hasJumpBridge)    notes.push("JB");
+          if (hasCyno)          notes.push("Cynogen");
+          if (hasHarvester)     notes.push("Miner");
+          if (hasTCU)           notes.push("TCU");
+          if (numTurrets == 0 && numHardeners == 0) {
+            notes.push("no guns/hardeners");
+          } else {
+            if (numTurrets > 0)   notes.push(numTurrets   + " guns");
+            if (numHardeners > 0) notes.push(numHardeners + " hardeners");
+          }
+          var towerType = findBy(dscan, function(v) {
+            return v.indexOf("Control Tower") >= 0;
+          });
+          if (towerType) {
+            var words = towerType.split(' ');
+            if (words.length < 4) // "Amarr Control Tower"
+              towerType = words[0] + ' Large';
+            else                  // "Amarr Control Tower Small"
+              towerType = words[0] + ' ' + words[3];
+          } else {
+            towerType = '';
+          }
+          sendRequest(
+            "http://londeroth.org/~ben/moontool/dscan.cgi",
+            function(token) {
+              var cells = [
+                headers.regionname,
+                headers.constellationname,
+                headers.solarsystemname,
+                moon_planet.value,
+                moon_moon.value,
+                moon_corp.value,
+                moon_alliance.value,
+                moon_scoutname.value ? moon_scoutname.value : headers.charname,
+                formatDate(new Date()),
+                hasJammer ? 'Jammer' :
+                  hasCSAA ? 'CSAA' :
+                  hasJumpBridge ? 'Jump Bridge' :
+                  hasCyno ? 'Cynogen' :
+                  hasHarvester ? 'Mining' :
+                  'Staging',
+                notes.join(", ") + " - http://raynor.cl/s/" + token,
+                towerType];
+              row.appendChild(document.createTextNode(cells.join("\t")));
+              div.appendChild(row);
+              moonSetOutput(div);
+            },
+            localDscan.join("\n"));
+        }
+      }
+
+      function onMoonResponse(data) {
+        var headers;
+        try {
+          headers = JSON.parse(data);
+        } catch (e) {
+          moonSetOutputText("error: bad json data: " + data);
+          return;
+        }
+        moonFormatOutput(moon_input.value, headers);
+
+        moon_input.value = "";
+      }
+
+      function sendRequest(url, cb, body) {
+        if (moon_current)
+          moon_current.abort();
+        var r = moon_current = new XMLHttpRequest();
+        r.open("POST", url);
+        r.onreadystatechange = function(e) {
+          if (r.readyState != 4)
+            return;
+          if (r.status == 200) {
+            cb(r.responseText);
+          } else {
+            var pre = document.createElement("pre");
+            pre.appendChild(document.createTextNode(
+                "Error: " + r.statusText + ": " + r.responseText));
+            moonSetOutput(pre);
+          }
+        };
+
+        r.send(body);
+      }
+
+      function onMoonSubmit(e) {
+        e.preventDefault();
+        moonSetOutputText("Submitting...");
+
+        sendRequest(
+          "http://londeroth.org/~ben/moontool/igb.cgi",
+          onMoonResponse,
+          null);
+      }
+
+      function go() {
+        if (window.CCPEVE) {
+          // would limit to /~ben/, but looks like the igb chokes on ~
+          CCPEVE.requestTrust("http://londeroth.org/");
+        }
+
+        var noscript = document.getElementById("noscript");
+        noscript.parentNode.removeChild(noscript);
+
+        moon_form      = document.getElementById("moon-form");
+        moon_planet    = document.getElementById("moon-planet");
+        moon_moon      = document.getElementById("moon-moon");
+        moon_corp      = document.getElementById("moon-corp");
+        moon_alliance  = document.getElementById("moon-alliance");
+        moon_scoutname = document.getElementById("moon-scoutname");
+        moon_input     = document.getElementById("moon-input");
+        moon_output    = document.getElementById("moon-output");
+        moon_form.addEventListener("submit", onMoonSubmit);
+        document.getElementById("moon-button").disabled = false;
+      }
+    ]]></script>
+    <style type="text/css"><![CDATA[
+      body, html {
+        color:              #989898;
+        background:         #222;
+        font-family:        "EVE Sans Neue",sans-serif;
+        font-size:          10pt;
+      }
+
+      ::selection {
+        background:         #adadad ! important;
+      }
+
+      .section {
+        background-color:   black;
+        border:             1px solid #636363;
+        margin:             0.3em;
+        padding:            0.3em;
+        color:              #bfbfbf;
+      }
+
+      h1 {
+        margin:             0;
+        font-size:          10pt;
+        font-weight:        normal;
+      }
+
+      .section h2 {
+        float:              right;
+        padding-left:       0.3em;
+        padding-right:      0.3em;
+        margin-top:         0;
+        font-size:          10pt;
+        font-weight:        normal;
+      }
+
+      input, textarea {
+        font-family:        "EVE Sans Neue",sans-serif;
+        font-size:          10pt;
+        background-color:   #222;
+        color:              #bfbfbf;
+        border:             1px solid black;
+      }
+
+      textarea {
+        font-family:        monospace;
+        width:              100%;
+      }
+
+      .textarea-container {
+        padding-left:       8px;
+        padding-right:      16px;
+      }
+
+      button {
+        font-family:        "EVE Sans Neue",sans-serif;
+        font-size:          10pt;
+        color:              #9a9a9a;
+        background-image:   -moz-linear-gradient(to bottom, black, #151515);
+        background:         -webkit-gradient(linear, left top, left bottom, from(black), to(#151515));
+        border:             1px solid black;
+        border-bottom:      1px solid #353535;
+      }
+
+      button:hover {
+        border:             1px solid #999;
+      }
+
+      button:active {
+        border:             1px solid white;
+      }
+
+      form {
+        display:            inline;
+      }
+
+      table.siglist {
+        white-space:        nowrap;
+        border-spacing:     0;
+        border-collapse:    collapse;
+      }
+
+      table.siglist .sig-recent td {
+        color:              #65bf65;
+      }
+
+      table.siglist .sig-updated .sig-id {
+        font-weight:        bold;
+      }
+
+      table.siglist th {
+        text-align:         left;
+        font-weight:        normal
+      }
+
+      table.siglist td, table.siglist th {
+        background-color:   #222;
+        border-top:         1px solid #595959;
+        border-bottom:      1px solid #595959;
+        border-left:        1px solid #3e3e3e;
+        border-right:       1px solid #3e3e3e;
+        padding:            2px 6px;
+      }
+
+      table.siglist .sig-id {
+        font-family:        monospace;
+      }
+    ]]></style>
+  </head>
+  <body onload="go()">
+    <h1>POS recording tool</h1>
+    <p id="noscript">JavaScript is required.</p>
+    <div class="section">
+      <form id="moon-form">
+        <p>
+          <input type="text" size="6" placeholder="Planet"
+                 name="moon-planet" id="moon-planet"
+          />-<input type="text" size="6" placeholder="Moon"
+                 name="moon-moon" id="moon-moon" />
+          <input type="text" size="10" placeholder="Corp"
+                 name="corp" id="moon-corp" />
+          <input type="text" size="10" placeholder="Alliance"
+                 name="alliance" id="moon-alliance" />
+          <input type="text" size="20" placeholder="Scout name"
+                 name="scoutname" id="moon-scoutname" />
+          <button id="moon-button"
+                  disabled="disabled">Get spreadsheet row</button>
+        </p>
+        <p class="textarea-container">
+          <textarea rows="4" name="input" id="moon-input" />
+        </p>
+      </form>
+      <p id="moon-output" />
+    </div>
+  </body>
+</html>
