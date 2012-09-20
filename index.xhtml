@@ -53,122 +53,6 @@
         return null;
       }
 
-      function moonFormatOutput(input, headers) {
-        if (false) { //if (!headers.solarsystemname) {
-          moonSetOutputText(
-            "Please use the EVE ingame browser and trust this site");
-        } else {
-          var div = document.createElement("div");
-          var btn = document.createElement("button");
-          btn.appendChild(document.createTextNode("Clear results"));
-          btn.addEventListener("click", function(e) {
-            moonSetOutput(document.createElement("p"));
-          });
-          div.appendChild(btn);
-          var row = document.createElement("textarea");
-          row.setAttribute("readonly", "readonly");
-          var localDscan = input.split("\n").filter(function(line) {
-            return line.match(/\t\d{1,3} km$/) ||
-                   line.match(/ m$/); ; // only stuff on grid
-          });
-          var dscan = localDscan.map(function(line) {
-            return line.split("\t")[1];
-          });
-          var hasCSAA       = hasOne(dscan, "Capital Ship Assembly Array");
-          var hasJammer     = hasOne(dscan, "Cynosural System Jammer");
-          var hasJumpBridge = hasOne(dscan, "Jump Bridge");
-          var hasCyno       = hasOne(dscan, "Cynosural Generator Array");
-          var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
-          var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
-          //var isIHUB        = hasOne(dscan, "Infrastructure Hub");
-          var hasLab        = findBy(dscan, function(v) {
-            return v.match(/ Laboratory$|^Drug Lab$/);
-          });
-          var hasRefiner    = findBy(dscan, function(v) {
-            return v.match(/ Refining Array$/);
-          });
-          var hasReactor    = findBy(dscan, function(v) {
-            return v.match(/ Reactor Array$/);
-          });
-          var numTurrets = countBy(dscan, function(line) {
-            return line.match(/ (Laser|Blaster|Railgun|Artillery|AutoCannon|Torpedo|Missile) Battery$/);
-          });
-          var numHardeners = countBy(dscan, function(line) {
-            return line.match(/^(Ballistic Deflection|Explosion Dampening|Heat Dissipation|Photon Scattering) Array$/);
-          });
-          var notes = []
-          if (hasCSAA)          notes.push("CSAA");
-          if (hasJammer)        notes.push("Jammer");
-          if (hasJumpBridge)    notes.push("JB");
-          if (hasCyno)          notes.push("Cynogen");
-          if (hasHarvester)     notes.push("Miner");
-          if (hasTCU)           notes.push("TCU");
-          if (hasLab)           notes.push("Lab");
-          if (hasRefiner)       notes.push("Refining");
-          if (hasReactor)       notes.push("Reactor");
-          if (numTurrets == 0 && numHardeners == 0) {
-            notes.push("no guns/hardeners");
-          } else {
-            if (numTurrets > 0)   notes.push(numTurrets   + " guns");
-            if (numHardeners > 0) notes.push(numHardeners + " hardeners");
-          }
-          var towerType = findBy(dscan, function(v) {
-            return v.indexOf("Control Tower") >= 0;
-          });
-          if (towerType) {
-            var words = towerType.split(' ');
-            if (words.length < 4) // "Amarr Control Tower"
-              towerType = words[0] + ' Large';
-            else                  // "Amarr Control Tower Small"
-              towerType = words[0] + ' ' + words[3];
-          } else {
-            towerType = '';
-          }
-          sendRequest(
-            "http://londeroth.org/~ben/moontool/dscan.cgi",
-            function(token) {
-              var cells = [
-                headers.regionname,
-                headers.constellationname,
-                headers.solarsystemname,
-                moon_planet.value,
-                moon_moon.value,
-                moon_corp.value,
-                moon_alliance.value,
-                moon_scoutname.value ? moon_scoutname.value : headers.charname,
-                formatDate(new Date()),
-                hasJammer ? 'Jammer' :
-                  hasCSAA ? 'CSAA' :
-                  hasJumpBridge ? 'Jump Bridge' :
-                  hasCyno ? 'Cynogen' :
-                  hasHarvester ? 'Mining' :
-                  hasLab ? 'Labs' :
-                  hasRefiner ? 'Refining' :
-                  hasReactor ? 'Reaction' :
-                  'Staging',
-                notes.join(", ") + " - http://raynor.cl/s/" + token,
-                towerType];
-              row.appendChild(document.createTextNode(cells.join("\t")));
-              div.appendChild(row);
-              moonSetOutput(div);
-            },
-            localDscan.join("\n"));
-        }
-      }
-
-      function onMoonResponse(data) {
-        var headers;
-        try {
-          headers = JSON.parse(data);
-        } catch (e) {
-          moonSetOutputText("error: bad json data: " + data);
-          return;
-        }
-        moonFormatOutput(moon_input.value, headers);
-
-        moon_input.value = "";
-      }
-
       function sendRequest(url, cb, body) {
         if (moon_current)
           moon_current.abort();
@@ -194,10 +78,112 @@
         e.preventDefault();
         moonSetOutputText("Submitting...");
 
+//          moonSetOutputText(
+            //"Please use the EVE ingame browser and trust this site");
+        var row = document.createElement("textarea");
+        row.setAttribute("readonly", "readonly");
+        var localDscan = moon_input.value.split("\n").filter(function(line) {
+          return line.match(/\t\d{1,3} km$/) ||
+                 line.match(/ m$/); ; // only stuff on grid
+        });
+        var dscan = localDscan.map(function(line) {
+          return line.split("\t")[1];
+        });
+        var hasCSAA       = hasOne(dscan, "Capital Ship Assembly Array");
+        var hasJammer     = hasOne(dscan, "Cynosural System Jammer");
+        var hasJumpBridge = hasOne(dscan, "Jump Bridge");
+        var hasCyno       = hasOne(dscan, "Cynosural Generator Array");
+        var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
+        var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
+        //var isIHUB        = hasOne(dscan, "Infrastructure Hub");
+        var hasLab        = findBy(dscan, function(v) {
+          return v.match(/ Laboratory$|^Drug Lab$/);
+        });
+        var hasRefiner    = findBy(dscan, function(v) {
+          return v.match(/ Refining Array$/);
+        });
+        var hasReactor    = findBy(dscan, function(v) {
+          return v.match(/ Reactor Array$/);
+        });
+        var numTurrets = countBy(dscan, function(line) {
+          return line.match(/ (Laser|Blaster|Railgun|Artillery|AutoCannon|Torpedo|Missile) Battery$/);
+        });
+        var numHardeners = countBy(dscan, function(line) {
+          return line.match(/^(Ballistic Deflection|Explosion Dampening|Heat Dissipation|Photon Scattering) Array$/);
+        });
+        var notes = []
+        if (hasCSAA)          notes.push("CSAA");
+        if (hasJammer)        notes.push("Jammer");
+        if (hasJumpBridge)    notes.push("JB");
+        if (hasCyno)          notes.push("Cynogen");
+        if (hasHarvester)     notes.push("Miner");
+        if (hasTCU)           notes.push("TCU");
+        if (hasLab)           notes.push("Lab");
+        if (hasRefiner)       notes.push("Refining");
+        if (hasReactor)       notes.push("Reactor");
+        if (numTurrets == 0 && numHardeners == 0) {
+          notes.push("no guns/hardeners");
+        } else {
+          if (numTurrets > 0)   notes.push(numTurrets   + " guns");
+          if (numHardeners > 0) notes.push(numHardeners + " hardeners");
+        }
+        var towerType = findBy(dscan, function(v) {
+          return v.indexOf("Control Tower") >= 0;
+        });
+        if (towerType) {
+          var words = towerType.split(' ');
+          if (words.length < 4) // "Amarr Control Tower"
+            towerType = words[0] + ' Large';
+          else                  // "Amarr Control Tower Small"
+            towerType = words[0] + ' ' + words[3];
+        } else {
+          towerType = '';
+        }
         sendRequest(
-          "http://londeroth.org/~ben/moontool/igb.cgi",
-          onMoonResponse,
-          null);
+          "http://londeroth.org/~ben/moontool/dscan.cgi",
+          function(data) {
+            var vals;
+            try {
+              vals = JSON.parse(data);
+            } catch (e) {
+              moonSetOutputText("error: bad json data: " + data);
+              return;
+            }
+
+            var div = document.createElement("div");
+            var btn = document.createElement("button");
+            btn.appendChild(document.createTextNode("Clear results"));
+            btn.addEventListener("click", function(e) {
+              moonSetOutput(document.createElement("p"));
+            });
+            div.appendChild(btn);
+            var cells = [
+              vals.regionname,
+              vals.constellationname,
+              vals.solarsystemname,
+              moon_planet.value,
+              moon_moon.value,
+              moon_corp.value,
+              moon_alliance.value,
+              moon_scoutname.value ? moon_scoutname.value : vals.charname,
+              formatDate(new Date()),
+              hasJammer ? 'Jammer' :
+                hasCSAA ? 'CSAA' :
+                hasJumpBridge ? 'Jump Bridge' :
+                hasCyno ? 'Cynogen' :
+                hasHarvester ? 'Mining' :
+                hasLab ? 'Labs' :
+                hasRefiner ? 'Refining' :
+                hasReactor ? 'Reaction' :
+                'Staging',
+              notes.join(", ") + " - http://raynor.cl/s/" + vals.token,
+              towerType];
+            row.appendChild(document.createTextNode(cells.join("\t")));
+            div.appendChild(row);
+            moonSetOutput(div);
+            moon_input.value = "";
+          },
+          localDscan.join("\n"));
       }
 
       function go() {
