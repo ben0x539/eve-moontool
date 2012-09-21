@@ -93,6 +93,7 @@
         var hasCyno       = hasOne(dscan, "Cynosural Generator Array");
         var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
         var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
+        var hasShield     = hasOne(dscan, "Force Field");
         //var isIHUB        = hasOne(dscan, "Infrastructure Hub");
         var hasLab        = findBy(dscan, function(v) {
           return v.match(/ Laboratory$|^Drug Lab$/);
@@ -110,6 +111,7 @@
           return line.match(/^(Ballistic Deflection|Explosion Dampening|Heat Dissipation|Photon Scattering) Array$/);
         });
         var notes = []
+        if (!hasShield)       notes.push("tower offline");
         if (hasCSAA)          notes.push("CSAA");
         if (hasJammer)        notes.push("Jammer");
         if (hasJumpBridge)    notes.push("JB");
