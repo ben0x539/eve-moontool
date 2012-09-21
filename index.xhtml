@@ -122,8 +122,14 @@
         if (numTurrets == 0 && numHardeners == 0) {
           notes.push("no guns/hardeners");
         } else {
-          if (numTurrets > 0)   notes.push(numTurrets   + " guns");
-          if (numHardeners > 0) notes.push(numHardeners + " hardeners");
+          if (numTurrets == 1)
+            notes.push("one gun");
+          else if (numTurrets > 0)
+            notes.push(numTurrets + " guns");
+          if (numHardeners == 1)
+            notes.push("one hardener");
+          else if (numHardeners > 0)
+            notes.push(numHardeners + " hardeners");
         }
         var towerType = findBy(dscan, function(v) {
           return v.indexOf("Control Tower") >= 0;
