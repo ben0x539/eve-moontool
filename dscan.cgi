@@ -1,9 +1,17 @@
 #!/usr/bin/env ruby
 
+class UserError < StandardError; end
 begin
   require 'net/https'
 
-  class UserError < StandardError; end
+  #thanks ruby.
+  Net::HTTPHeader.send(:define_method, :capitalize) do |name|
+    if name.downcase.start_with?('eve_')
+      name.upcase
+    else
+      name.split(/-/).map {|s| s.capitalize }.join('-')
+    end
+  end
 
   uri = URI.parse("https://adashboard.info/intel")
   req = Net::HTTP::Post.new(uri.path)
