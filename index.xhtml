@@ -240,6 +240,7 @@
                 hasLab ? 'Labs' :
                 hasRefiner ? 'Refining' :
                 hasReactor ? 'Reaction' :
+                !hasShield ? 'Offline' :
                 'Staging',
               notes.join(", ") + " - " + vals.token,
               towerType];
