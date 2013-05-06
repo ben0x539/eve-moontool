@@ -379,6 +379,14 @@
       table.siglist .sig-id {
         font-family:        monospace;
       }
+
+      #moon-planet, #moon-moon {
+        width: 2em;
+      }
+
+      #moon-scoutname {
+        width: 6em;
+      }
     ]]></style>
   </head>
   <body onload="go()">
@@ -391,17 +399,17 @@
                  name="moon-planet" id="moon-planet"
           />-<input type="text" size="6" placeholder="Moon"
                  name="moon-moon" id="moon-moon" />
-          <input type="text" size="10" placeholder="Corp"
+          <input type="text" size="5" placeholder="Corp"
                  name="corp" id="moon-corp" />
-          <input type="text" size="10" placeholder="Alliance"
+          <input type="text" size="5" placeholder="Alliance"
                  name="alliance" id="moon-alliance" />
           <input type="text" size="20" placeholder="Scout name"
                  name="scoutname" id="moon-scoutname" />
           <button id="moon-button"
-                  disabled="disabled">Get spreadsheet row</button>
+                  disabled="disabled">Go</button>
         </p>
         <p class="textarea-container">
-          <textarea rows="4" name="input" id="moon-input" />
+          <textarea rows="2" name="input" id="moon-input" />
         </p>
       </form>
       <p id="moon-output" />
