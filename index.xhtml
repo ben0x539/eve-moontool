@@ -260,7 +260,9 @@
                 hasReactor ? 'Reactor' :
                 !hasShield ? 'Offline' :
                 'Staging',
-              towerType != '' ? (notes.join(", ") + " - " + vals.token) : '',
+              towerType != ''
+                ? (notes.join(", ") + " - " + vals.token)
+                : hasTCU ? "no tower" : "",
               towerType];
             row.appendChild(document.createTextNode(cells.join("\t")));
             div.appendChild(row);
