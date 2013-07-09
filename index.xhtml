@@ -265,7 +265,7 @@
                 !hasShield ? 'Offline' :
                 'Staging',
               towerType != ''
-                ? (notes.join(", ") + " - " + vals.token)
+                ? (notes.join(", ") + " - " + vals.token + "#zg-ongridonly")
                 : hasTCU ? "no tower" : "",
               towerType];
             row.appendChild(document.createTextNode(cells.join("\t")));
