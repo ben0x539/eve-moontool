@@ -25,9 +25,9 @@
       }
 
       function formatDate(time) {
-        return (time.getMonth()+1) +
-               '/' + time.getDate() +
-               '/' + time.getFullYear();
+        return (time.getUTCMonth()+1) +
+               '/' + time.getUTCDate() +
+               '/' + time.getUTCFullYear();
       }
 
       function hasOne(ary, value) {
