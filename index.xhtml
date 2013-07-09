@@ -165,12 +165,14 @@
           return line[1]; //type
         });
         var hasCSAA       = hasOne(dscan, "Capital Ship Assembly Array");
+        var hasCSMA       = hasOne(dscan, "Capital Ship Maintenance Array");
         var hasJammer     = hasOne(dscan, "Cynosural System Jammer");
         var hasJumpBridge = hasOne(dscan, "Jump Bridge");
         var hasCyno       = hasOne(dscan, "Cynosural Generator Array");
         var hasHarvester  = hasOne(dscan, "Moon Harvesting Array");
         var hasTCU        = hasOne(dscan, "Territorial Claim Unit");
         var hasShield     = hasOne(dscan, "Force Field");
+        var hasXLSAA     = hasOne(dscan, "X-Large Ship Assembly Array");
         var isIHUB        = hasOne(dscan, "Infrastructure Hub");
         var hasLab        = findBy(dscan, function(v) {
           return v.match(/ Laboratory$|^Drug Lab$/);
@@ -190,6 +192,8 @@
         var notes = []
         if (!hasShield)       notes.push("tower offline");
         if (hasCSAA)          notes.push("CSAA");
+        if (hasCSMA)          notes.push("CSMA");
+        if (hasXLSAA)         notes.push("XLSAA");
         if (hasJammer)        notes.push("Jammer");
         if (hasJumpBridge)    notes.push("JB");
         if (hasCyno)          notes.push("Cynogen");
