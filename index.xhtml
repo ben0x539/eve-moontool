@@ -94,6 +94,16 @@
         return sum;
       }
 
+      function condPushPluralized(notes, num, item) {
+        if (num == 1)
+          notes.push("one " + item);
+        else if (num > 1)
+          notes.push(num + " " + item + "s");
+        else
+          return false;
+        return true;
+      }
+
       function onMoonSubmit(e) {
         e.preventDefault();
         moonSetOutputText("Submitting...");
@@ -189,6 +199,12 @@
         var numHardeners = countBy(dscan, function(line) {
           return line.match(/^(Ballistic Deflection|Explosion Dampening|Heat Dissipation|Photon Scattering) Array$/);
         });
+        var numPoints = countBy(dscan, function(line) {
+          return line.match(/Warp (Scrambling|Disruption) Battery$/);
+        });
+        var numECM = countBy(dscan, function(line) {
+          return line.match(/(Ion Field Projection|Phase Inversion|Spatial Destabilization|White Noise Generation) Battery$/);
+        });
         var notes = []
         if (!hasShield)       notes.push("tower offline");
         if (hasCSAA)          notes.push("CSAA");
@@ -202,17 +218,12 @@
         if (hasLab)           notes.push("Lab");
         if (hasRefiner)       notes.push("Refining");
         if (hasReactor)       notes.push("Reactor");
-        if (numTurrets == 0 && numHardeners == 0) {
-          notes.push("no guns/hardeners");
-        } else {
-          if (numTurrets == 1)
-            notes.push("one gun");
-          else if (numTurrets > 0)
-            notes.push(numTurrets + " guns");
-          if (numHardeners == 1)
-            notes.push("one hardener");
-          else if (numHardeners > 0)
-            notes.push(numHardeners + " hardeners");
+        // don't short-circuit
+        if (!condPushPluralized(notes, numTurrets, "gun")
+            & !condPushPluralized(notes, numHardeners, "hardener")
+            & !condPushPluralized(notes, numPoints, "point")
+            & !condPushPluralized(notes, numECM, "ecm mod")) {
+          notes.push("no gun/tank/point/ecm");
         }
         var towerType = findBy(dscan, function(v) {
           return v.indexOf("Control Tower") >= 0;
