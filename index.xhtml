@@ -131,10 +131,18 @@
           else
             continue;
           var distStr = line[2];
-          var dist = distStr.replace(/,/g, "").match(/([0-9\.]+) (?:k?m|AU)/);
+          var dist = distStr.match(/([0-9\.,]+) (?:k?m|AU)/)[1];
           if (!dist)
             continue; // shouldn't happen
-          dist = parseFloat(dist[1]);
+          var maybeDecimalPoint = dist[dist.length - 2];
+          if (maybeDecimalPoint == '.') {
+            dist = dist.replace(/,/g, "");
+          } else if (maybeDecimalPoint == ',') { // thanks nzezt
+            dist = dist.replace(/\./g, "").replace(/,/g, ".");
+          } else {
+            dist = dist.replace(/[,\.]/g, "");
+          }
+          dist = parseFloat(dist);
           if (distStr.match(/ km$/)) {
             dist *= 1;
           } else if (distStr.match(/ AU$/)) {
